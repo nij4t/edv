@@ -26,6 +26,6 @@ func main() {
 		addr = ":8080"
 	}
 
-	logger.Infof("server starting on port %s\n", addr)
+	logger.Infof("server starting on %s\n", addr)
 	logger.Fatal(http.ListenAndServe(addr, mux))
 }
