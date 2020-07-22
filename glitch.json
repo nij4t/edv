@@ -1,0 +1,16 @@
+{
+  "install": "make install",
+  "start": "make start",
+  "watch": {
+    "throttle": "3000",
+    "restart": {
+      "include": [
+        ".go$"
+      ],
+      "exclude": [
+        "README.md"
+      ]
+    }
+  },
+  "throttle": "3000"
+}
