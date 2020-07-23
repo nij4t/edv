@@ -9,7 +9,7 @@
 //     Schemes: http, https
 //     BasePath: /api/v1alpha1
 //     Version: 0.0.1
-//     License: MIT http://opensource.org/licenses/MIT
+//     License: MIT https://github.com/nij4t/edv/blob/master/LICENSE
 //     Contact: Nijat Mahmudov<n.e.mahmudov@gmail.com>
 //
 //     Consumes:

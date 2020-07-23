@@ -8,7 +8,7 @@ info:
   description: This api provides a cashback service from EDV Geri Al
   license:
     name: MIT
-    url: http://opensource.org/licenses/MIT
+    url: https://github.com/nij4t/edv/blob/master/LICENSE
   termsOfService: there are no TOS at this moment, use at your own risk we take no responsibility
   title: EDVGeriAlAPI
   version: 0.0.1
