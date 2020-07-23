@@ -1,0 +1,57 @@
+basePath: /api/v1alpha1
+consumes:
+- application/json
+info:
+  contact:
+    email: n.e.mahmudov@gmail.com
+    name: Nijat Mahmudov
+  description: This api provides a cashback service from EDV Geri Al
+  license:
+    name: MIT
+    url: http://opensource.org/licenses/MIT
+  termsOfService: there are no TOS at this moment, use at your own risk we take no responsibility
+  title: EDVGeriAlAPI
+  version: 0.0.1
+paths:
+  /login:
+    post:
+      description: Authenticates user and returns JWT access token
+      operationId: login
+      parameters:
+      - in: body
+        name: Body
+        schema:
+          properties:
+            mobile:
+              description: User's phone number
+              type: string
+              x-go-name: Mobile
+            password:
+              description: User's Password
+              type: string
+              x-go-name: Password
+          required:
+          - mobile
+          - password
+          type: object
+      responses:
+        "200":
+          $ref: '#/responses/loginResponse'
+produces:
+- application/json
+responses:
+  loginResponse:
+    description: LoginResponse is a response schema used when user provides correct credetials
+    schema:
+      properties:
+        token:
+          description: Access Token
+          type: string
+          x-go-name: Token
+      required:
+      - token
+      type: object
+schemes:
+- http
+- https
+swagger: "2.0"
