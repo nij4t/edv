@@ -14,8 +14,8 @@ heroku-deploy:
 heroku-push:
 	git push heroku master
 
-./cmd/server: 
-	go build -o bin/server ./cmd/server
+./bin/server: ./cmd/server
+	go build -o ./bin/server ./cmd/server
 
 start: ./cmd/server 
 	./bin/server
@@ -23,8 +23,17 @@ start: ./cmd/server
 cf:
 	which cf 
 
-cf-deploy: cf ./cmd/server
+./bin:
+	mkdir ./bin
+
+./bin/static: ./bin
+	cp -r ./public ./bin/static
+
+cf-deploy: cf ./bin/server ./bin/static
 	cf push
 
 swagger:
 	GO111MODULE=off swagger generate spec -o ./swagger.yml --scan-models
+
+clean:
+	rm -rf ./bin
