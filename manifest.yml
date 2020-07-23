@@ -1,9 +1,10 @@
 applications:
-  - path: ./cmd/server
-    name: edv
-    environment_json: {}
-    memory: 64M
-    instances: 1
-    disk_quota: 1024M
-    services:
-      - availability-monitoring-auto
+- name: edv
+  path: ./bin
+  buildpacks:
+  - binary_buildpack
+  memory: 64M
+  instances: 1
+  disk_quota: 128M
+  services:
+  - availability-monitoring-auto
