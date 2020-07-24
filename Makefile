@@ -15,7 +15,7 @@ heroku-push:
 	git push heroku master
 
 ./bin/server: ./cmd/server
-	go build -o ./bin/server ./cmd/server
+	CGO=0 GOOS=linux GOARCH=amd64 go build -o ./bin/server ./cmd/server
 
 start: ./cmd/server 
 	./bin/server
