@@ -1,2 +1,6 @@
 .env
 bin/
+.gitsecret/keys/random_seed
+pki/tls.key
+pki/san.conf
+pki/tls.crt
