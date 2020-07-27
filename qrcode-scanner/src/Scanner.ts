@@ -1,4 +1,3 @@
-import jsQR from 'jsqr';
 
 export class Scanner {
     private animationId: number;
@@ -13,6 +12,10 @@ export class Scanner {
         this.ctx = this.canvas.getContext('2d');
         this.source = document.createElement('video');
         this.frames = 0;
+        this.worker = new Worker("./scannerWorker.ts");
+        this.worker.addEventListener('message', e => {
+            console.log(e.data)
+        })
     }
 
 
@@ -37,30 +40,28 @@ export class Scanner {
 
     private update() {
         if (this.source.readyState === this.source.HAVE_ENOUGH_DATA) {
+            this.draw();
             if (this.frames % 10 === 0) {
-                let image = this.draw();
-                if (this.frames % 50 === 0) {
-                    this.scan(image);
-                }
-                }
+                this.scan()
+                this.frames = 0
             }
-            this.frames++
-            this.animationId = requestAnimationFrame(() => this.update());
         }
+        this.frames++
+        this.animationId = requestAnimationFrame(() => this.update());
+    }
 
-    private draw() {
+    private draw(): void {
         this.canvas.width = this.source.videoWidth;
         this.canvas.height = this.source.videoHeight;
         this.ctx.drawImage(this.source, 0, 0);
-        let image = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
-        return image;
     }
 
-    private scan(image: ImageData) {
-        let code = jsQR(image.data, image.width, image.height, {
-            inversionAttempts: "dontInvert",
-        });
-        if (code !== null)
-            console.log(code.data);
+    private getImageData(): ImageData {
+        return this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+    }
+
+    private scan() {
+        const image = this.getImageData()
+        this.worker.postMessage({ image })
     }
 }
