@@ -1,0 +1,10 @@
+.login {
+	padding: 20px;
+	min-height: 100%;
+    width: 100%;
+}
+
+.login > * {
+	display: block;
+	margin: 20px;
+}
