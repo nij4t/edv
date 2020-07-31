@@ -6,24 +6,47 @@ import 'preact-material-components/TextField/style.css'
 
 import './style.css'
 
-export class Login extends Component<IProps,{}> {
+export class Login extends Component<Props, State> {
+    constructor(props: Props) {
+        super(props)
+        this.setState({ mobile: props.mobile, password: props.password })
+    }
+
     render() {
         return (
             <div className="login">
                 <h1>Login</h1>
-                <TextField className="input" label="Phone Number"></TextField>
-                <TextField className="input" type="password" label="Password"></TextField>
-                <Button className="button" raised onClick={this.props.authenticate}>Login</Button>
+                <TextField
+                    onChange={(e: any) => this.setState({ mobile: e.target.value })}
+                    className="input"
+                    label="Phone Number"
+                    value={this.state.mobile}>
+                </TextField>
+                <TextField
+                    onChange={(e: any) => this.setState({ password: e.target.value })}
+                    className="input"
+                    type="password"
+                    label="Password"
+                    value={this.state.password}>
+                </TextField>
+                <Button
+                    className="button"
+                    raised
+                    onClick={() => (this.props.authenticate(this.state))}>
+                    Login
+                    </Button>
             </div>
         )
     }
-    
-    authenticate = () => {
-        this.props.authenticate()
-    }
-
 }
 
-interface IProps {
-    authenticate(): void;
+interface State {
+    mobile: string
+    password: string
+}
+
+interface Props {
+    mobile?: string
+    password?: string;
+    authenticate: Function
 }

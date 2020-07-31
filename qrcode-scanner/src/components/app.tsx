@@ -3,27 +3,29 @@ import { Router, RouterOnChangeArgs, route } from 'preact-router'
 
 import { Home } from "../routes/home"
 import { Login } from '../routes/login'
-import { State } from '../types'
+import { CookieStorage } from '../CookieStorage'
 
-export class App extends Component<{}, State> {
+
+export class App extends Component {
+
+    private sessionStorage: Storage;
 
     constructor() {
         super()
-        const auth = localStorage.getItem('authenticated') !== null ? true : false
-        this.setState({ authenticated: auth })
+        this.sessionStorage = new CookieStorage()
     }
 
     render() {
         return (
             <Router onChange={this.handleRoute}>
                 <Home path="/" logout={this.logout} />
-                <Login path="/login" authenticate={this.auth} />
-            </Router >
+                <Login path="/login" authenticate={this.login} />
+            </Router>
         )
     }
 
     handleRoute = (e: RouterOnChangeArgs) => {
-        if (!this.state.authenticated) {
+        if (!this.isAuthenticated()) {
             route('/login')
             return
         }
@@ -35,19 +37,40 @@ export class App extends Component<{}, State> {
     }
 
     isAuthenticated = () => {
-        return this.state.authenticated
+        const token = this.sessionStorage.getItem("token")
+        return token === "" ? false : true
     }
 
 
-    auth = () => {
-        this.setState({ authenticated: true })
-        localStorage.setItem('authenticated', 'true')
-        route('/')
+    login = (req: AuthRequestBody) => {
+        this.authenticate(req)
+            .then(v => {
+                this.sessionStorage.setItem("token", v.Body.token)
+                route('/')
+            })
     }
 
     logout = () => {
-        this.setState({ authenticated: false })
-        localStorage.removeItem('authenticated')
+        this.sessionStorage.removeItem("token")
         route('/login')
     }
+
+    private authenticate(req: AuthRequestBody): Promise<AuthResponse> {
+        return fetch('/api/v1alpha1/login', {
+            method: 'POST',
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(req)
+        }).then(
+            res => res.json()
+        )
+    }
+}
+
+interface AuthRequestBody {
+    mobile: string
+    password: string
+}
+
+interface AuthResponse {
+    Body: { token: string }
 }
