@@ -1,7 +1,7 @@
 import { Component, Fragment } from "preact";
 import { h } from 'preact'
-import * as libscanner from '../Scanner'
-import { Camera } from "../Camera";
+import * as libscanner from '../lib/Scanner'
+import { Camera } from "../lib/Camera";
 
 export class Scanner extends Component<Props, {}> {
 

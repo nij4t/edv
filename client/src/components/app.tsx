@@ -5,9 +5,9 @@ import 'preact-material-components/Dialog/style.css';
 
 import { Home as Home } from "../routes/home"
 import { Login } from '../routes/login'
-import { CookieStorage } from '../CookieStorage'
-import * as EDVClient from '../EDVClient'
-import { memoize } from '../util';
+import { CookieStorage } from '../lib/CookieStorage'
+import * as EDVClient from '../lib/EDVClient'
+import { memoize } from '../lib/util';
 
 
 export class App extends Component<{}, State> {
