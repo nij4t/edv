@@ -3,7 +3,7 @@ export class Scanner {
     private animationId: number;
     private canvas: HTMLCanvasElement;
     private ctx: CanvasRenderingContext2D;
-    private source: HTMLVideoElement;
+    public source: HTMLVideoElement;
     private frames: number;
     private worker: Worker;
 
@@ -13,11 +13,13 @@ export class Scanner {
         this.source = document.createElement('video');
         this.frames = 0;
         this.worker = new Worker("./scannerWorker.ts");
-        this.worker.addEventListener('message', e => {
-            console.log(e.data)
-        })
     }
 
+    public onScan(fn: SuccessfulScan) {
+        this.worker.addEventListener('message', e => {
+            fn(e.data)
+        })
+    }
 
     public attachTo(elm: HTMLElement) {
         elm.append(this.canvas);
@@ -64,4 +66,8 @@ export class Scanner {
         const image = this.getImageData()
         this.worker.postMessage({ image })
     }
+}
+
+export interface SuccessfulScan {
+    (data: string): void
 }
