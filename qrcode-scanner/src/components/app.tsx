@@ -42,12 +42,11 @@ export class App extends Component {
     }
 
 
-    login = (req: AuthRequestBody) => {
-        this.authenticate(req)
-            .then(v => {
-                this.sessionStorage.setItem("token", v.Body.token)
-                route('/')
-            })
+    login = (req: EDVClient.AuthRequestBody) => {
+        EDVClient.auth(req).then(v => {
+            this.sessionStorage.setItem("token", v.Body.token)
+            route('/')
+        })
     }
 
     logout = () => {
