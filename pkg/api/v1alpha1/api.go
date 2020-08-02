@@ -86,6 +86,7 @@ func (s *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	s.l.Debugf("creds: %s", creds)
 	token := s.c.Login(creds.Body.Mobile, creds.Body.Password)
 
+	w.Header().Add("Access-Control-Allow-Origin", "*")
 	w.WriteHeader(http.StatusOK)
 	enc := json.NewEncoder(w)
 	// payload := &LoginResponse{Token: token}
