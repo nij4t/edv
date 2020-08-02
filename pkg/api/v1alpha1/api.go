@@ -24,6 +24,8 @@ package v1alpha1
 import (
 	"encoding/json"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 
 	"github.com/sirupsen/logrus"
 )
@@ -65,6 +67,7 @@ type LoginResponse struct {
 // Handler bounds urls to handle func
 func (s *Handler) Handler(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1alpha1/login", s.Logger(s.Login))
+	mux.HandleFunc("/api/v1/", s.Logger(s.Proxy))
 }
 
 // swagger:route POST /login login
@@ -94,6 +97,38 @@ func (s *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	payload.Body.Token = token
 	enc.Encode(payload)
 	return
+}
+
+type roundTripFunc string
+
+func (f roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	resp, err := http.DefaultTransport.RoundTrip(req)
+	resp.Header.Set("Access-Control-Allow-Origin", "*")
+	resp.Header.Set("Access-Control-Allow-Headers", "*")
+	return resp, err
+}
+
+func (h *Handler) Proxy(w http.ResponseWriter, r *http.Request) {
+	url, _ := url.Parse("https://edvgerial.az")
+	proxy := httputil.NewSingleHostReverseProxy(url)
+	proxy.Transport = roundTripFunc("")
+
+	r.URL.Host = url.Host
+	r.URL.Scheme = url.Scheme
+	r.Host = url.Host
+
+	c := &http.Cookie{}
+	c.Name = "ac_session"
+	c.Value = r.Header.Get("x-access-token")
+	r.AddCookie(c)
+	r.Header.Del("x-access-token")
+
+	c.Name = "rf_session"
+	c.Value = r.Header.Get("x-refresh-token")
+	r.AddCookie(c)
+	r.Header.Del("x-refresh-token")
+
+	proxy.ServeHTTP(w, r)
 }
 
 func New(client edvclient, logger logrus.FieldLogger) *Handler {
