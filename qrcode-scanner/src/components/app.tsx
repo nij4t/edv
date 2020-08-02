@@ -1,26 +1,45 @@
-import { h, Component } from 'preact'
+import { h, Component, Fragment } from 'preact'
 import { Router, RouterOnChangeArgs, route } from 'preact-router'
+import Dialog from 'preact-material-components/ts/Dialog'
+import 'preact-material-components/Dialog/style.css';
 
-import { Home } from "../routes/home"
+import { Home as Home } from "../routes/home"
 import { Login } from '../routes/login'
 import { CookieStorage } from '../CookieStorage'
+import * as EDVClient from '../EDVClient'
+import { memoize } from '../util';
 
 
-export class App extends Component {
+export class App extends Component<{}, State> {
 
     private sessionStorage: Storage;
+    private scrollingDlg: any;
+    private memoized: Function;
 
     constructor() {
         super()
         this.sessionStorage = new CookieStorage()
+        this.memoized = memoize(this.find).bind(this)
     }
 
     render() {
         return (
-            <Router onChange={this.handleRoute}>
-                <Home path="/" logout={this.logout} />
-                <Login path="/login" authenticate={this.login} />
-            </Router>
+            <Fragment>
+                <Router onChange={this.handleRoute}>
+                    <Home path="/" success={this.handleSuccessfulScan} logout={this.logout} />
+                    <Login path="/login" authenticate={this.login} />
+                </Router>
+                <Dialog ref={scrollingDlg => { this.scrollingDlg = scrollingDlg; }}>
+                    <Dialog.Header>Information</Dialog.Header>
+                    <Dialog.Body>
+                        {this.state.dialogBody}
+                    </Dialog.Body>
+                    <Dialog.Footer>
+                        <Dialog.FooterButton cancel={true}>Decline</Dialog.FooterButton>
+                        <Dialog.FooterButton accept={true}>Accept</Dialog.FooterButton>
+                    </Dialog.Footer>
+                </Dialog>
+            </Fragment>
         )
     }
 
@@ -54,22 +73,28 @@ export class App extends Component {
         route('/login')
     }
 
-    private authenticate(req: AuthRequestBody): Promise<AuthResponse> {
-        return fetch('/api/v1alpha1/login', {
-            method: 'POST',
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(req)
-        }).then(
-            res => res.json()
-        )
+    handleSuccessfulScan = (url: string) => {
+        const re = /doc=(\w{12})/
+        const fiskalId = re.exec(url)[1]
+
+        this.memoized(fiskalId).then((v: EDVClient.FindResponse) => {
+            console.log(v)
+            this.setState({ dialogBody: v.body.message })
+            this.scrollingDlg.MDComponent.show()
+        })
+    }
+
+    private find(fiskalId: string): Promise<EDVClient.FindResponse> {
+        return EDVClient.find(
+            {
+                body: { id: fiskalId },
+                headers: {
+                    "x-access-token": this.sessionStorage.getItem("token")
+                }
+            })
     }
 }
 
-interface AuthRequestBody {
-    mobile: string
-    password: string
-}
-
-interface AuthResponse {
-    Body: { token: string }
+interface State {
+    dialogBody: string
 }
