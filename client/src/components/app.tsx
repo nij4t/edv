@@ -70,7 +70,7 @@ export class App extends Component<{}, State> {
 
     logout = () => {
         this.sessionStorage.removeItem("token")
-        route('/login')
+        location.reload() // Free MediaSourceObject (Camera)
     }
 
     handleSuccessfulScan = (url: string) => {
