@@ -39,8 +39,41 @@ export interface FindRequest {
     }
 }
 
-export interface FindResponse {
+export type FindResponse = ReadyFindRespone | ErrorFindResponse
+
+export type PENDING = 400
+export type READY = 200
+
+interface ErrorFindResponse {
     body: {
+        code: PENDING
         message: string
+    }
+}
+
+interface ReadyFindRespone {
+    body: {
+        code: READY
+        data: {
+            id: number
+            fiskalId: string
+            insertDate: Date
+            buyAmount: {
+                value: string
+                currency: {
+                    code: number
+                    name: string
+                }
+            }
+            refundAmount: {
+                value: string
+                currency: {
+                    code: number
+                    name: string
+                }
+            }
+            state: string
+            chequeStatusMessage: string
+        }
     }
 }

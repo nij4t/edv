@@ -78,9 +78,17 @@ export class App extends Component<{}, State> {
         const fiskalId = re.exec(url)[1]
 
         this.memoized(fiskalId).then((v: EDVClient.FindResponse) => {
-            console.log(v)
-            this.setState({ dialogBody: v.body.message })
-            this.scrollingDlg.MDComponent.show()
+            if (v.body.code === 400) {
+                this.setState({ dialogBody: v.body.message })
+                this.scrollingDlg.MDComponent.show()
+                return
+            }
+
+            if (v.body.code === 200) {
+                this.setState({ dialogBody: `Return ${v.body.data.refundAmount.value} ${v.body.data.refundAmount.currency.name}?` })
+                this.scrollingDlg.MDComponent.show()
+                return
+            }
         })
     }
 
