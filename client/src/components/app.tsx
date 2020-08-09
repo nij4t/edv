@@ -7,36 +7,43 @@ import { Home as Home } from "../routes/home"
 import { Login } from '../routes/login'
 import { CookieStorage } from '../lib/CookieStorage'
 import * as EDVClient from '../lib/EDVClient'
-import { memoize } from '../lib/util';
+import { debounce } from '../lib/util';
 
 
 export class App extends Component<{}, State> {
 
     private sessionStorage: Storage;
     private scrollingDlg: any;
-    private memoized: Function;
+    private debounced: Function;
 
     constructor() {
         super()
         this.sessionStorage = new CookieStorage()
-        this.memoized = memoize(this.find).bind(this)
+        this.debounced = debounce(this.handleSuccessfulScan, 1000, true).bind(this)
     }
 
     render() {
         return (
             <Fragment>
                 <Router onChange={this.handleRoute}>
-                    <Home path="/" success={this.handleSuccessfulScan} logout={this.logout} />
+                    <Home path="/" success={p => this.debounced(p)} logout={this.logout} />
                     <Login path="/login" authenticate={this.login} />
                 </Router>
-                <Dialog ref={scrollingDlg => { this.scrollingDlg = scrollingDlg; }}>
+                <Dialog onAccept={this.refund} ref={scrollingDlg => { this.scrollingDlg = scrollingDlg; }}>
                     <Dialog.Header>Information</Dialog.Header>
                     <Dialog.Body>
                         {this.state.dialogBody}
                     </Dialog.Body>
                     <Dialog.Footer>
-                        <Dialog.FooterButton cancel={true}>Decline</Dialog.FooterButton>
-                        <Dialog.FooterButton accept={true}>Accept</Dialog.FooterButton>
+                        {
+                            this.state.dialogMode === "unary" ?
+                                <Dialog.FooterButton cancel={true}>OK</Dialog.FooterButton>
+                                :
+                                <Fragment>
+                                    <Dialog.FooterButton accept={true}>Yes</Dialog.FooterButton>
+                                    < Dialog.FooterButton cancel={true}>No</Dialog.FooterButton>
+                                </Fragment>
+                        }
                     </Dialog.Footer>
                 </Dialog>
             </Fragment>
@@ -73,19 +80,24 @@ export class App extends Component<{}, State> {
         route('/login')
     }
 
+    // TODO: Add service worker caching
     handleSuccessfulScan = (url: string) => {
+        // TODO: Add validation method
         const re = /doc=(\w{12})/
         const fiskalId = re.exec(url)[1]
+        console.log(this.state)
 
-        this.memoized(fiskalId).then((v: EDVClient.FindResponse) => {
-            if (v.body.code === 400) {
-                this.setState({ dialogBody: v.body.message })
+        // TODO: extract status codes to constants
+        // TODO: show dialog on body state change event
+        this.find(fiskalId).then((v: EDVClient.FindResponse) => {
+            if (v.body.code === 400 || v.body.code === 406) {
+                this.setState({ lastCashbackResponse: v, dialogMode: 'unary', dialogBody: v.body.message })
                 this.scrollingDlg.MDComponent.show()
                 return
             }
 
             if (v.body.code === 200) {
-                this.setState({ dialogBody: `Return ${v.body.data.refundAmount.value} ${v.body.data.refundAmount.currency.name}?` })
+                this.setState({ lastCashbackResponse: v, dialogMode: 'binary', dialogBody: `Return ${v.body.data.refundAmount.value} ${v.body.data.refundAmount.currency.name}?` })
                 this.scrollingDlg.MDComponent.show()
                 return
             }
@@ -101,8 +113,28 @@ export class App extends Component<{}, State> {
                 }
             })
     }
+
+    refund = () => {
+        console.log(this.state.lastCashbackResponse)
+        EDVClient.refund(
+            {
+                body:
+                    { id: (this.state.lastCashbackResponse as EDVClient.ReadyFindRespone).body.data.id },
+                headers: {
+                    "x-access-token": this.sessionStorage.getItem("token")
+                }
+            }).then((v: EDVClient.RefundResponse) => {
+                this.setState({ dialogMode: 'unary', dialogBody: v.body.data.message })
+                this.scrollingDlg.MDComponent.show()
+            })
+    }
+
 }
 
 interface State {
     dialogBody: string
+    dialogMode: DialogMode
+    lastCashbackResponse: EDVClient.FindResponse
 }
+
+type DialogMode = 'binary' | 'unary'
