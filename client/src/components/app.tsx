@@ -6,8 +6,8 @@ import 'preact-material-components/Dialog/style.css';
 import { Home as Home } from "../routes/home"
 import { Login } from '../routes/login'
 import { CookieStorage } from '../lib/CookieStorage'
-import * as EDVClient from '../lib/EDVClient'
 import { debounce } from '../lib/util';
+import { AuthRequestBody, EDVClient, FindResponse, ReadyFindRespone, RefundResponse } from '../lib/EDVClient';
 
 
 export class App extends Component<{}, State> {
@@ -15,11 +15,13 @@ export class App extends Component<{}, State> {
     private sessionStorage: Storage;
     private scrollingDlg: any;
     private debounced: Function;
+    private edvClient: EDVClient;
 
     constructor() {
         super()
         this.sessionStorage = new CookieStorage()
         this.debounced = debounce(this.handleSuccessfulScan, 1000, true).bind(this)
+        this.edvClient = new EDVClient(window.location.origin)
     }
 
     render() {
@@ -68,8 +70,8 @@ export class App extends Component<{}, State> {
     }
 
 
-    login = (req: EDVClient.AuthRequestBody) => {
-        EDVClient.auth(req).then(v => {
+    login = (req: AuthRequestBody) => {
+        this.edvClient.auth(req).then(v => {
             this.sessionStorage.setItem("token", v.Body.token)
             route('/')
         })
@@ -89,7 +91,7 @@ export class App extends Component<{}, State> {
 
         // TODO: extract status codes to constants
         // TODO: show dialog on body state change event
-        this.find(fiskalId).then((v: EDVClient.FindResponse) => {
+        this.find(fiskalId).then((v: FindResponse) => {
             if (v.body.code === 400 || v.body.code === 406) {
                 this.setState({ lastCashbackResponse: v, dialogMode: 'unary', dialogBody: v.body.message })
                 this.scrollingDlg.MDComponent.show()
@@ -104,8 +106,8 @@ export class App extends Component<{}, State> {
         })
     }
 
-    private find(fiskalId: string): Promise<EDVClient.FindResponse> {
-        return EDVClient.find(
+    private find(fiskalId: string): Promise<FindResponse> {
+        return this.edvClient.find(
             {
                 body: { id: fiskalId },
                 headers: {
@@ -116,14 +118,14 @@ export class App extends Component<{}, State> {
 
     refund = () => {
         console.log(this.state.lastCashbackResponse)
-        EDVClient.refund(
+        this.edvClient.refund(
             {
                 body:
-                    { id: (this.state.lastCashbackResponse as EDVClient.ReadyFindRespone).body.data.id },
+                    { id: (this.state.lastCashbackResponse as ReadyFindRespone).body.data.id },
                 headers: {
                     "x-access-token": this.sessionStorage.getItem("token")
                 }
-            }).then((v: EDVClient.RefundResponse) => {
+            }).then((v: RefundResponse) => {
                 this.setState({ dialogMode: 'unary', dialogBody: v.body.data.message })
                 this.scrollingDlg.MDComponent.show()
             })
@@ -134,7 +136,7 @@ export class App extends Component<{}, State> {
 interface State {
     dialogBody: string
     dialogMode: DialogMode
-    lastCashbackResponse: EDVClient.FindResponse
+    lastCashbackResponse: FindResponse
 }
 
 type DialogMode = 'binary' | 'unary'

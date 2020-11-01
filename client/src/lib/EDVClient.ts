@@ -1,34 +1,41 @@
-const BASE_URL = 'https://localhost'
+export class EDVClient {
+    private baseUrl: string
 
-export function auth(req: AuthRequestBody): Promise<AuthResponse> {
-    return fetch(BASE_URL + '/api/v1alpha1/login', {
-        method: 'POST',
-        body: JSON.stringify(req)
-    }).then(resp => resp.json())
-}
+    constructor(baseUrl?: string) {
+        this.baseUrl = baseUrl || "https://localhost"
+    }
 
-export function find(req: FindRequest): Promise<FindResponse> {
-    return fetch(BASE_URL + '/api/v1/cashback/find', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            ...req.headers
-        },
-        body: JSON.stringify(req.body)
-    }).then(resp => resp.json()).then(v => ({ body: v })
-    )
-}
+    public auth(req: AuthRequestBody): Promise<AuthResponse> {
+        return fetch(this.baseUrl + '/api/v1alpha1/login', {
+            method: 'POST',
+            body: JSON.stringify(req)
+        }).then(resp => resp.json())
+    }
 
-export function refund(req: RefundRequest): Promise<RefundResponse> {
-    return fetch(BASE_URL + '/api/v1/cashback/refund', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            ...req.headers
-        },
-        body: JSON.stringify(req.body)
-    }).then(resp => resp.json()).then(v => ({ body: v })
-    )
+    public find(req: FindRequest): Promise<FindResponse> {
+        return fetch(this.baseUrl + '/api/v1/cashback/find', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...req.headers
+            },
+            body: JSON.stringify(req.body)
+        }).then(resp => resp.json()).then(v => ({ body: v })
+        )
+    }
+
+    public refund(req: RefundRequest): Promise<RefundResponse> {
+        return fetch(this.baseUrl + '/api/v1/cashback/refund', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...req.headers
+            },
+            body: JSON.stringify(req.body)
+        }).then(resp => resp.json()).then(v => ({ body: v })
+        )
+    }
+
 }
 
 export interface AuthRequestBody {
